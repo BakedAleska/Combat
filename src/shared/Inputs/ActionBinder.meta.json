@@ -1,0 +1,8 @@
+{
+    "className": "Script",
+    "properties": {
+        "RunContext": {
+            "Enum": 2
+        }
+    }
+}
