@@ -7,11 +7,27 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 -- IMPORT
 local Types = require(ReplicatedStorage.Shared.Types)
 
+--- @class State
 local State = {}
 State.__index = State
 
+--- @prop Duration number
+--- @within State
+--- The total duration of the State. A value of 0 is used for a State that will never be exited.
+
+--- @prop Elapsed number
+--- @within State
+--- The amount of time the State has been ticked for.
+
+--- @prop Name string
+--- @within State
+--- The name of the State object.
+
+--- @prop Priority number
+--- @within State
+--- The priority of the State. Describes the point in the queue at which the State object will be placed. Clamped (1-99)
+
 --- Creates a new State instance
---- @class State
 --- @param Props table? Optional table of properties to override or add properties.
 function State.new(Props: {}?)
 	local self = setmetatable({

@@ -8,19 +8,32 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 -- TYPES
 local Types = require(ReplicatedStorage.Shared.Types)
 
+--- @class StateMachine
 local StateMachine = {}
 StateMachine.__index = StateMachine
 
+--- @prop _Queue table
+--- @readonly
+--- @within StateMachine
+--- The StateMachine queue. Used to iterate States.
+
+--- @prop CurrentState State
+--- @within StateMachine
+--- The State object which is being actively ticked.
+
+--- @prop LastState State
+--- @within StateMachine
+--- The last State object the StateMachine was ticking.
+
 --- Creates a new StateMachine instance.
---- @class StateMachine
---- @param StartIn State The State object the StateMachine starts in.
+--- @param StartIn State The default State object; used as a fallback and on startup.
 function StateMachine.new(StartIn: Types.State)
 	StartIn.Priority = 100
 
 	local self = setmetatable({
 		CurrentState = nil, -- The current state
 		LastState = nil, -- The state that was just left.
-		Queue = { StartIn }, -- Priority sorted queue.
+		_Queue = { StartIn }, -- Priority sorted queue.
 	}, StateMachine)
 
 	return self
@@ -34,30 +47,30 @@ function StateMachine:Transition(Target: Types.State)
 
 	Target.StateMachine = self
 
-	for Index, NextState in ipairs(self.Queue) do
+	for Index, NextState in ipairs(self._Queue) do
 		if Target.Priority < NextState.Priority then
-			table.insert(self.Queue, Index, Target)
+			table.insert(self._Queue, Index, Target)
 
 			return
 		end
 	end
 
-	table.insert(self.Queue, #self.Queue, Target)
+	table.insert(self._Queue, #self._Queue, Target)
 end
 
 --- Clear the StateMachine's queue.
---- @usage When a player needs to be forced idle.
+--- Used when a player needs to be forced idle.
 function StateMachine:Clear()
-	local IdleState = self.Queue[#self.Queue]
-	table.clear(self.Queue)
-	table.insert(self.Queue, IdleState)
+	local IdleState = self._Queue[#self._Queue]
+	table.clear(self._Queue)
+	table.insert(self._Queue, IdleState)
 end
 
 --- Ticks the StateMachine.
 --- Moves through states in the queue.
 --- @param dt number DeltaTime returned by RunService.Heartbeat
 function StateMachine:Update(dt: number)
-	local NextState = self.Queue[1]
+	local NextState = self._Queue[1]
 	if not NextState then
 		return
 	end
@@ -73,7 +86,7 @@ function StateMachine:Update(dt: number)
 
 	if not self.CurrentState.Update then
 		warn("[StateMachine] Critical error. Corrupted state object.")
-		table.remove(self.Queue, 1)
+		table.remove(self._Queue, 1)
 		return
 	end
 
@@ -81,7 +94,7 @@ function StateMachine:Update(dt: number)
 	self.CurrentState.Elapsed += dt
 
 	if self.CurrentState.Duration and self.CurrentState.Elapsed >= self.CurrentState.Duration then
-		table.remove(self.Queue, 1)
+		table.remove(self._Queue, 1)
 	end
 end
 
