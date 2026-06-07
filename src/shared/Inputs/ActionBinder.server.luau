@@ -25,21 +25,32 @@ end
 
 for _, InputAction in ipairs(script.Parent:GetDescendants()) do
 	if InputAction:IsA("InputAction") then
-		InputAction.Pressed:Connect(function()
+		local function FireInputState(State: string)
 			local RemoteEvent = RemoteEvents[InputAction.Name]
-			if RemoteEvent then
-				local ClientInfo = {
-					KeysPressed = {},
-					MouseLocation = Vector2.new(Mouse.X / Mouse.ViewSizeX, Mouse.Y / Mouse.ViewSizeY),
-				} :: Types.ClientInfo
-				for _, InputObject in pairs(UserInputService:GetKeysPressed()) do
-					table.insert(ClientInfo.KeysPressed, InputObject.KeyCode)
-				end
-
-				RemoteEvent:FireServer(ClientInfo)
-			else
+			if not RemoteEvent then
 				warn(`[ActionBinder] No such remote event for action {InputAction.Name}`)
+				return
 			end
+
+			local ClientInfo = {
+				State = State,
+				KeysPressed = {},
+				MouseLocation = Vector2.new(Mouse.X / Mouse.ViewSizeX, Mouse.Y / Mouse.ViewSizeY),
+			} :: Types.ClientInfo
+
+			for _, InputObject in pairs(UserInputService:GetKeysPressed()) do
+				table.insert(ClientInfo.KeysPressed, InputObject.KeyCode)
+			end
+
+			RemoteEvent:FireServer(ClientInfo)
+		end
+
+		InputAction.Pressed:Connect(function()
+			FireInputState("Pressed")
+		end)
+
+		InputAction.Released:Connect(function()
+			FireInputState("Released")
 		end)
 	end
 end

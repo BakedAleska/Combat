@@ -1,6 +1,7 @@
 export type ClientInfo = {
 	KeysPressed: { Enum.KeyCode? },
 	MouseLocation: Vector2,
+	State: "Pressed" | "Released",
 }
 
 export type StateMachine = {
@@ -10,6 +11,17 @@ export type StateMachine = {
 	Transition: (State) -> (),
 	Clear: () -> (),
 	Update: (number) -> (),
+}
+
+type Connection = {
+	Disconnect: (self: Connection) -> (),
+}
+
+export type Signal<T...> = {
+	Connect: (self: Signal<T...>, callback: (T...) -> ()) -> Connection,
+	Once: (self: Signal<T...>, callback: (T...) -> ()) -> Connection,
+	Fire: (self: Signal<T...>, T...) -> (),
+	Wait: (self: Signal<T...>) -> T...,
 }
 
 export type State = {

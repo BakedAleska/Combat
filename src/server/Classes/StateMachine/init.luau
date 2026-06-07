@@ -6,6 +6,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 -- TYPES
+local goodsignal = require(ReplicatedStorage.Packages.goodsignal)
 local Types = require(ReplicatedStorage.Shared.Types)
 
 --- @class StateMachine
@@ -25,8 +26,14 @@ StateMachine.__index = StateMachine
 --- @within StateMachine
 --- The last State object the StateMachine was ticking.
 
+--- @prop StateChanged Signal
+--- @within StateMachine
+--- @external Signal https://github.com/stravant/goodsignal
+--- A goodsignal object; OldStateName, NewStateName parameters. Fires on state change.
+
 --- Creates a new StateMachine instance.
---- @param StartIn State The default State object; used as a fallback and on startup.
+--- @param StartIn State -- The default State object; used as a fallback and on startup.
+--- @return StateMachine
 function StateMachine.new(StartIn: Types.State)
 	StartIn.Priority = 100
 
@@ -34,14 +41,21 @@ function StateMachine.new(StartIn: Types.State)
 		CurrentState = nil, -- The current state
 		LastState = nil, -- The state that was just left.
 		_Queue = { StartIn }, -- Priority sorted queue.
+
+		StateChanged = goodsignal.new() :: Types.Signal<Types.State, Types.State>,
 	}, StateMachine)
+
+	-- Initialize states.
+	for _, State in ipairs(script.States:GetChildren()) do
+		require(State)
+	end
 
 	return self
 end
 
 --- Adds a state to the StateMachine queue.
 --- Passes the StateMachine object to the target State.
---- @param Target State The state object to add to the queue.
+--- @param Target State -- The state object to add to the queue.
 function StateMachine:Transition(Target: Types.State)
 	Target.Priority = math.clamp(Target.Priority, 1, 99)
 
@@ -68,7 +82,7 @@ end
 
 --- Ticks the StateMachine.
 --- Moves through states in the queue.
---- @param dt number DeltaTime returned by RunService.Heartbeat
+--- @param dt number -- DeltaTime returned by RunService.Heartbeat
 function StateMachine:Update(dt: number)
 	local NextState = self._Queue[1]
 	if not NextState then
@@ -96,6 +110,50 @@ function StateMachine:Update(dt: number)
 	if self.CurrentState.Duration and self.CurrentState.Elapsed >= self.CurrentState.Duration then
 		table.remove(self._Queue, 1)
 	end
+
+	self.StateChanged:Fire(
+		(self.LastState and self.LastState.Name) or nil,
+		(self.CurrentState and self.CurrentState.Name) or nil
+	)
+end
+
+--- Destroy the StateMachine.
+--- Cleans up queued state objects and clears internal references.
+--- @return boolean -- Whether destruction completed without errors.
+function StateMachine:Destroy(): boolean
+	local Success = true
+
+	if self.CurrentState and type(self.CurrentState.OnExit) == "function" then
+		local Ok, Err = pcall(self.CurrentState.OnExit, self.CurrentState)
+		if not Ok then
+			warn("[StateMachine] Failed to exit current state during destroy:", Err)
+			Success = false
+		end
+	end
+
+	for _, State in ipairs(self._Queue) do
+		if type(State) == "table" and type(State.Destroy) == "function" then
+			local Ok, Err = pcall(State.Destroy, State)
+			if not Ok then
+				warn("[StateMachine] Failed to destroy queued state:", Err)
+				Success = false
+			end
+		end
+	end
+
+	table.clear(self._Queue)
+	self.CurrentState = nil
+	self.LastState = nil
+
+	if self.StateChanged and type(self.StateChanged.Destroy) == "function" then
+		local Ok, Err = pcall(self.StateChanged.Destroy, self.StateChanged)
+		if not Ok then
+			warn("[StateMachine] Failed to destroy StateChanged signal:", Err)
+			Success = false
+		end
+	end
+
+	return Success
 end
 
 return StateMachine

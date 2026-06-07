@@ -28,7 +28,8 @@ State.__index = State
 --- The priority of the State. Describes the point in the queue at which the State object will be placed. Clamped (1-99)
 
 --- Creates a new State instance
---- @param Props table? Optional table of properties to override or add properties.
+--- @param Props table? -- Optional table used to override or add properties when extending.
+--- @return State
 function State.new(Props: {}?)
 	local self = setmetatable({
 		Name = nil,
@@ -51,6 +52,10 @@ function State:OnEnter() end
 function State:OnExit() end
 
 --- Called each frame by the StateMachine.
+--- @param dt number The delta time returned by RunService.Heartbeat.
 function State:Update(dt: number) end
+
+--- Destory a given state
+function State:Destroy() end
 
 return State
