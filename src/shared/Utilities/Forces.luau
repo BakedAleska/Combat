@@ -7,8 +7,7 @@ local Debris = game:GetService("Debris")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
--- IMPORT
-local Events = ReplicatedStorage.Shared.Events
+local Networker = require(ReplicatedStorage.Shared.Networker)
 local janitor = require(ReplicatedStorage.Packages.janitor)
 
 -- VARIABLES
@@ -124,28 +123,28 @@ function Forces.DestroyForces(RootPart: BasePart)
 end
 
 function Forces.Listen()
-	Events.applyLinearVelocity.OnClientEvent:Connect(function(Character, Velocity, Duration, Max)
+	Networker.Connect("applyLinearVelocity", function(Character, Velocity, Duration, Max)
 		local Root = Character:FindFirstChild("HumanoidRootPart") :: BasePart?
 		if Root then
 			Forces.LinearVelocity(Root, Velocity, Duration, Max)
 		end
 	end)
 
-	Events.applyAdaptiveLinearVelocity.OnClientEvent:Connect(function(Character, Velocity, Duration, Direction, Max)
+	Networker.Connect("applyAdaptiveLinearVelocity", function(Character, Velocity, Duration, Direction, Max)
 		local Root = Character:FindFirstChild("HumanoidRootPart") :: BasePart?
 		if Root then
 			Forces.AdaptiveLinearVelocity(Root, Velocity, Duration, Direction, Max)
 		end
 	end)
 
-	Events.applyAssemblyLinearVelocity.OnClientEvent:Connect(function(Character, Velocity)
+	Networker.Connect("applyAssemblyLinearVelocity", function(Character, Velocity)
 		local Root = Character:FindFirstChild("HumanoidRootPart") :: BasePart?
 		if Root then
 			Forces.AssemblyLinearVelocity(Root, Velocity)
 		end
 	end)
 
-	Events.destroyForces.OnClientEvent:Connect(function(Character)
+	Networker.Connect("destroyForces", function(Character)
 		local Root = Character:FindFirstChild("HumanoidRootPart") :: BasePart?
 		if Root then
 			Forces.DestroyForces(Root)

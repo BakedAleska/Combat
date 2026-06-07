@@ -6,8 +6,7 @@ local Debris = game:GetService("Debris")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 
--- IMPORTS
-local Events = ReplicatedStorage.Shared.Events
+local Networker = require(ReplicatedStorage.Shared.Networker)
 
 export type Properties = {
 	Enabled: boolean?,
@@ -19,7 +18,7 @@ export type Properties = {
 local Effects = {}
 
 function Effects.Emit(Effect: string, Adornee: BasePart | Attachment, Properties: Properties?)
-	local Container = ReplicatedStorage.Shared.Assets.Effects:FindFirstChild(Effect, true)
+	local Container = ReplicatedStorage.Assets.Effects:FindFirstChild(Effect, true)
 	if not Container then
 		warn(string.format("[Effects] No such effect: %s", Effect))
 		return
@@ -94,7 +93,7 @@ function Effects.Emit(Effect: string, Adornee: BasePart | Attachment, Properties
 end
 
 function Effects.Invoke(Effect: string, Adornee: BasePart | Attachment, Arguments: {}?)
-	local Module = ReplicatedStorage.Shared.Assets.Effects:FindFirstChild(Effect, true)
+	local Module = ReplicatedStorage.Assets.Effects:FindFirstChild(Effect, true)
 	if not Module or not Module:IsA("ModuleScript") then
 		warn(string.format("[Effects] No module found: %s", Effect))
 		return
@@ -121,7 +120,8 @@ local function Adorn(Character, Adornee: (BasePart | Attachment)?): (BasePart | 
 end
 
 function Effects.Listen()
-	Events.emitEffect.OnClientEvent:Connect(
+	Networker.Connect(
+		"emitEffect",
 		function(Character: Model, Effect: string, Adornee: (BasePart | Attachment)?, Properties: Properties?)
 			local Target = Adorn(Character, Adornee)
 			if not Target then
@@ -131,7 +131,8 @@ function Effects.Listen()
 		end
 	)
 
-	Events.invokeEffect.OnClientEvent:Connect(
+	Networker.Connect(
+		"invokeEffect",
 		function(Character: Model, Effect: string, Adornee: (BasePart | Attachment)?, Arguments: {}?)
 			local Target = Adorn(Character, Adornee)
 			if not Target then

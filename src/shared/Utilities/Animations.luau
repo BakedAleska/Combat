@@ -17,8 +17,7 @@ local ContentProvider = game:GetService("ContentProvider")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
--- IMPORTS
-local Events = ReplicatedStorage.Shared.Events
+local Networker = require(ReplicatedStorage.Shared.Networker)
 
 -- VARIABLES
 local Player = Players.LocalPlayer
@@ -27,15 +26,16 @@ local Player = Players.LocalPlayer
 local Animations = {}
 
 --[[
--- An exclusive "is playing on LocalPlayer" playing animation and queue.
+-- A per-key local animation playing list and queue.
+-- Allows multiple concurrent animations by name/group.
 --]]
-local Playing: AnimationTrack? = nil
-local Queued: AnimationTrack? = nil
+local Playing: { [string]: AnimationTrack } = {}
+local Queued: { [string]: AnimationTrack } = {}
 
 export type Properties = { Looped: boolean?, Group: string?, FadeTime: number?, Speed: number? }
 
 function Animations.PlayAnimation(Character: Model, Name: string, Properties: Properties?)
-	local Animation = ReplicatedStorage.Shared.Assets.Animations:FindFirstChild(Name, true)
+	local Animation = ReplicatedStorage.Assets.Animations:FindFirstChild(Name, true)
 	if not Animation then
 		warn(string.format("[Animations] No such animation: %s", Name))
 		return
@@ -66,43 +66,41 @@ function Animations.PlayAnimation(Character: Model, Name: string, Properties: Pr
 
 	const LOOPED = Track.Looped
 	const LOCAL = Character == Player.Character
+	local Key = (Properties and Properties.Group) or Name
 
 	if LOCAL then
-		if Playing then
-			if Playing ~= Track then
-				if Playing.Looped and not LOOPED then
-					Queued = Playing
-				end
-				if LOOPED then
-					Queued = nil
-				end
-
-				Playing:Stop(FadeTime)
+		local Existing = Playing[Key]
+		if Existing and Existing ~= Track then
+			if Existing.Looped and not LOOPED then
+				Queued[Key] = Existing
 			end
+			if LOOPED then
+				Queued[Key] = nil
+			end
+			Existing:Stop(FadeTime)
 		end
 
-		Playing = Track
+		Playing[Key] = Track
 	end
 
 	Track:Play(FadeTime)
 
 	if not LOOPED then
-		const track = Track
-
+		local track = Track
 		track.Stopped:Once(function()
 			if not LOCAL then
 				return
 			end
-			if Playing ~= track then
+			if Playing[Key] ~= track then
 				return
 			end
 
-			Playing = nil
+			Playing[Key] = nil
 
-			if Queued then
-				local resume = Queued
-				Queued = nil
-				Playing = resume
+			if Queued[Key] then
+				local resume = Queued[Key]
+				Queued[Key] = nil
+				Playing[Key] = resume
 				resume:Play(DEFAULT_FADE_TIME)
 			end
 		end)
@@ -115,14 +113,18 @@ function Animations.StopAnimation(Character: Model, Name: string, FadeTime: numb
 	local LOCAL = Character == Player.Character
 
 	if LOCAL then
-		if Playing and (Playing.Name == Name or Playing:GetAttribute("Group") == Name) then
-			Playing:Stop(FadeTime)
-			Playing = nil
+		for Key, Track in pairs(Playing) do
+			if Track and (Track.Name == Name or Track:GetAttribute("Group") == Name) then
+				Track:Stop(FadeTime)
+				Playing[Key] = nil
+			end
 		end
 
-		if Queued and (Queued.Name == Name or Queued:GetAttribute("Group") == Name) then
-			Queued:Stop(FadeTime)
-			Queued = nil
+		for Key, Track in pairs(Queued) do
+			if Track and (Track.Name == Name or Track:GetAttribute("Group") == Name) then
+				Track:Stop(FadeTime)
+				Queued[Key] = nil
+			end
 		end
 	else
 		local Humanoid = Character:FindFirstChildOfClass("Humanoid")
@@ -165,8 +167,12 @@ function Animations.ModifyAnimation(Character: Model, Name: string, Key: string,
 			end
 		end
 
-		apply(Playing)
-		apply(Queued)
+		for _, Track in pairs(Playing) do
+			apply(Track)
+		end
+		for _, Track in pairs(Queued) do
+			apply(Track)
+		end
 	else
 		local Humanoid = Character:FindFirstChildOfClass("Humanoid")
 		if not Humanoid then
@@ -196,14 +202,18 @@ function Animations.CancelAnimations(Character: Model, FadeTime: number?)
 	local LOCAL = Character == Player.Character
 
 	if LOCAL then
-		if Playing then
-			Playing:Stop(FadeTime)
-			Playing = nil
+		for Key, Track in pairs(Playing) do
+			if Track then
+				Track:Stop(FadeTime)
+			end
+			Playing[Key] = nil
 		end
 
-		if Queued then
-			Queued:Stop(FadeTime)
-			Queued = nil
+		for Key, Track in pairs(Queued) do
+			if Track then
+				Track:Stop(FadeTime)
+			end
+			Queued[Key] = nil
 		end
 	else
 		local Humanoid = Character:FindFirstChildOfClass("Humanoid")
@@ -224,7 +234,7 @@ end
 
 function Animations.Listen()
 	local Queue = {}
-	for _, Animation in ipairs(ReplicatedStorage.Shared.Assets.Animations:GetDescendants()) do
+	for _, Animation in ipairs(ReplicatedStorage.Assets.Animations:GetDescendants()) do
 		if Animation:IsA("Animation") then
 			table.insert(Queue, Animation)
 		end
@@ -233,19 +243,19 @@ function Animations.Listen()
 		ContentProvider:PreloadAsync(Queue)
 	end
 
-	Events.playAnimation.OnClientEvent:Connect(function(Character: Model, Name: string, Properties)
+	Networker.Connect("playAnimation", function(Character: Model, Name: string, Properties)
 		Animations.PlayAnimation(Character, Name, Properties)
 	end)
 
-	Events.stopAnimation.OnClientEvent:Connect(function(Character: Model, Name: string, FadeTime: number?)
+	Networker.Connect("stopAnimation", function(Character: Model, Name: string, FadeTime: number?)
 		Animations.StopAnimation(Character, Name, FadeTime)
 	end)
 
-	Events.modifyAnimation.OnClientEvent:Connect(function(Character: Model, Name, Key, Value)
+	Networker.Connect("modifyAnimation", function(Character: Model, Name, Key, Value)
 		Animations.ModifyAnimation(Character, Name, Key, Value)
 	end)
 
-	Events.cancelAnimations.OnClientEvent:Connect(function(Character: Model, FadeTime: number?)
+	Networker.Connect("cancelAnimations", function(Character: Model, FadeTime: number?)
 		Animations.CancelAnimations(Character, FadeTime)
 	end)
 end
