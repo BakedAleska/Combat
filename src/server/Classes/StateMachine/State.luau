@@ -55,6 +55,27 @@ function State:OnExit() end
 --- @param dt number The delta time returned by RunService.Heartbeat.
 function State:Update(dt: number) end
 
+--- Extends a state's duration.
+--- @param Duration number The amount of time to add to the state duration.
+--- @return State
+function State:Extend(Duration: number)
+	if type(Duration) ~= "number" or Duration <= 0 then
+		return self
+	end
+
+	if self.Duration == 0 then
+		return self
+	end
+
+	if self.Duration == nil then
+		self.Duration = Duration
+	else
+		self.Duration += Duration
+	end
+
+	return self
+end
+
 --- Destory a given state
 function State:Destroy() end
 

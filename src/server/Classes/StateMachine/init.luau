@@ -4,8 +4,10 @@
 
 -- SERVICES
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerScriptService = game:GetService("ServerScriptService")
 
 -- TYPES
+local Propogate = require(ServerScriptService.Server.Functions.Propogate)
 local goodsignal = require(ReplicatedStorage.Packages.goodsignal)
 local Types = require(ReplicatedStorage.Shared.Types)
 
@@ -59,17 +61,36 @@ end
 function StateMachine:Transition(Target: Types.State)
 	Target.Priority = math.clamp(Target.Priority, 1, 99)
 
+	local TargetName = Target.Name
+	if self.CurrentState == Target or (TargetName and self.CurrentState and self.CurrentState.Name == TargetName) then
+		return false
+	end
+
+	for _, NextState in ipairs(self._Queue) do
+		if NextState == Target or (TargetName and NextState.Name == TargetName) then
+			return false
+		end
+	end
+
+	Propogate(Target, {
+		["StateMachine"] = self,
+		["Humanoid"] = self.Humanoid,
+		["Character"] = self.Character,
+		["Entity"] = self.Entity,
+	})
+
 	Target.StateMachine = self
 
 	for Index, NextState in ipairs(self._Queue) do
 		if Target.Priority < NextState.Priority then
 			table.insert(self._Queue, Index, Target)
 
-			return
+			return true
 		end
 	end
 
 	table.insert(self._Queue, #self._Queue, Target)
+	return true
 end
 
 --- Clear the StateMachine's queue.
