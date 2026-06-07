@@ -19,7 +19,7 @@ export type Properties = {
 local Effects = {}
 
 function Effects.Emit(Effect: string, Adornee: BasePart | Attachment, Properties: Properties?)
-	local Container = ReplicatedStorage.Assets.Effects:FindFirstChild(Effect, true)
+	local Container = ReplicatedStorage.Shared.Assets.Effects:FindFirstChild(Effect, true)
 	if not Container then
 		warn(string.format("[Effects] No such effect: %s", Effect))
 		return
@@ -94,7 +94,7 @@ function Effects.Emit(Effect: string, Adornee: BasePart | Attachment, Properties
 end
 
 function Effects.Invoke(Effect: string, Adornee: BasePart | Attachment, Arguments: {}?)
-	local Module = ReplicatedStorage.Assets.Effects:FindFirstChild(Effect, true)
+	local Module = ReplicatedStorage.Shared.Assets.Effects:FindFirstChild(Effect, true)
 	if not Module or not Module:IsA("ModuleScript") then
 		warn(string.format("[Effects] No module found: %s", Effect))
 		return
@@ -121,7 +121,7 @@ local function Adorn(Character, Adornee: (BasePart | Attachment)?): (BasePart | 
 end
 
 function Effects.Listen()
-	Events.emitEffect.OnServerEvent:Connect(
+	Events.emitEffect.OnClientEvent:Connect(
 		function(Character: Model, Effect: string, Adornee: (BasePart | Attachment)?, Properties: Properties?)
 			local Target = Adorn(Character, Adornee)
 			if not Target then
@@ -131,7 +131,7 @@ function Effects.Listen()
 		end
 	)
 
-	Events.invokeEffect.OnServerEvent:Connect(
+	Events.invokeEffect.OnClientEvent:Connect(
 		function(Character: Model, Effect: string, Adornee: (BasePart | Attachment)?, Arguments: {}?)
 			local Target = Adorn(Character, Adornee)
 			if not Target then

@@ -35,7 +35,7 @@ local Queued: AnimationTrack? = nil
 export type Properties = { Looped: boolean?, Group: string?, FadeTime: number?, Speed: number? }
 
 function Animations.PlayAnimation(Character: Model, Name: string, Properties: Properties?)
-	local Animation = ReplicatedStorage.Assets.Animations:FindFirstChild(Name, true)
+	local Animation = ReplicatedStorage.Shared.Assets.Animations:FindFirstChild(Name, true)
 	if not Animation then
 		warn(string.format("[Animations] No such animation: %s", Name))
 		return
@@ -224,7 +224,7 @@ end
 
 function Animations.Listen()
 	local Queue = {}
-	for _, Animation in ipairs(ReplicatedStorage.Assets.Animations:GetDescendants()) do
+	for _, Animation in ipairs(ReplicatedStorage.Shared.Assets.Animations:GetDescendants()) do
 		if Animation:IsA("Animation") then
 			table.insert(Queue, Animation)
 		end
@@ -233,19 +233,19 @@ function Animations.Listen()
 		ContentProvider:PreloadAsync(Queue)
 	end
 
-	Events.playAnimation.OnServerEvent:Connect(function(Character: Model, Name: string, Properties)
+	Events.playAnimation.OnClientEvent:Connect(function(Character: Model, Name: string, Properties)
 		Animations.PlayAnimation(Character, Name, Properties)
 	end)
 
-	Events.stopAnimation.OnServerEvent:Connect(function(Character: Model, Name: string, FadeTime: number?)
+	Events.stopAnimation.OnClientEvent:Connect(function(Character: Model, Name: string, FadeTime: number?)
 		Animations.StopAnimation(Character, Name, FadeTime)
 	end)
 
-	Events.modifyAnimation.OnServerEvent:Connect(function(Character: Model, Name, Key, Value)
+	Events.modifyAnimation.OnClientEvent:Connect(function(Character: Model, Name, Key, Value)
 		Animations.ModifyAnimation(Character, Name, Key, Value)
 	end)
 
-	Events.cancelAnimations.OnServerEvent:Connect(function(Character: Model, FadeTime: number?)
+	Events.cancelAnimations.OnClientEvent:Connect(function(Character: Model, FadeTime: number?)
 		Animations.CancelAnimations(Character, FadeTime)
 	end)
 end

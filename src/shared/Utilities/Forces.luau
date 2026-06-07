@@ -124,28 +124,28 @@ function Forces.DestroyForces(RootPart: BasePart)
 end
 
 function Forces.Listen()
-	Events.applyLinearVelocity.OnServerEvent:Connect(function(Character, Velocity, Duration, Max)
+	Events.applyLinearVelocity.OnClientEvent:Connect(function(Character, Velocity, Duration, Max)
 		local Root = Character:FindFirstChild("HumanoidRootPart") :: BasePart?
 		if Root then
 			Forces.LinearVelocity(Root, Velocity, Duration, Max)
 		end
 	end)
 
-	Events.applyAdaptiveLinearVelocity.OnServerEvent:Connect(function(Character, Velocity, Duration, Direction, Max)
+	Events.applyAdaptiveLinearVelocity.OnClientEvent:Connect(function(Character, Velocity, Duration, Direction, Max)
 		local Root = Character:FindFirstChild("HumanoidRootPart") :: BasePart?
 		if Root then
 			Forces.AdaptiveLinearVelocity(Root, Velocity, Duration, Direction, Max)
 		end
 	end)
 
-	Events.applyAssemblyLinearVelocity.OnServerEvent:Connect(function(Character, Velocity)
+	Events.applyAssemblyLinearVelocity.OnClientEvent:Connect(function(Character, Velocity)
 		local Root = Character:FindFirstChild("HumanoidRootPart") :: BasePart?
 		if Root then
 			Forces.AssemblyLinearVelocity(Root, Velocity)
 		end
 	end)
 
-	Events.destroyForces.OnServerEvent:Connect(function(Character)
+	Events.destroyForces.OnClientEvent:Connect(function(Character)
 		local Root = Character:FindFirstChild("HumanoidRootPart") :: BasePart?
 		if Root then
 			Forces.DestroyForces(Root)
