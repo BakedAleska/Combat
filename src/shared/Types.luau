@@ -13,7 +13,12 @@ export type StateMachine = {
 	Update: (number) -> (),
 }
 
-export type Entity = { Cooldowns: { [string]: boolean }, StateMachine: StateMachine, PlayerController: any }
+export type Entity = {
+	Cooldowns: { [string]: boolean },
+	StateMachine: StateMachine,
+	PlayerController: any,
+	Motor6DRegistry: { [string]: { ["Passive"]: Motor6D, ["Active"]: Motor6D } },
+}
 
 type Connection = {
 	Disconnect: (self: Connection) -> (),
