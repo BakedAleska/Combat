@@ -13,3 +13,6 @@ react-otter = "jsdotlua/react-otter@1.2.1"
 otter = "jsdotlua/otter@1.2.1"
 goodsignal = "stravant/goodsignal@0.3.1"
 replica = "aykut92/replica@0.1.7"
+
+[server-dependencies]
+profilestore = "lm-loleris/profilestore@1.0.3"

@@ -5,7 +5,7 @@ registry = "test"
 [[package]]
 name = "alejandro/combat"
 version = "0.1.0"
-dependencies = [["cmdr", "evaera/cmdr@1.12.0"], ["goodsignal", "stravant/goodsignal@0.3.1"], ["janitor", "howmanysmall/janitor@1.18.3"], ["otter", "jsdotlua/otter@1.2.1"], ["react", "jsdotlua/react@17.2.1"], ["react-otter", "jsdotlua/react-otter@1.2.1"], ["react-roblox", "jsdotlua/react-roblox@17.2.1"], ["replica", "aykut92/replica@0.1.7"]]
+dependencies = [["cmdr", "evaera/cmdr@1.12.0"], ["goodsignal", "stravant/goodsignal@0.3.1"], ["janitor", "howmanysmall/janitor@1.18.3"], ["otter", "jsdotlua/otter@1.2.1"], ["react", "jsdotlua/react@17.2.1"], ["react-otter", "jsdotlua/react-otter@1.2.1"], ["react-roblox", "jsdotlua/react-roblox@17.2.1"], ["replica", "aykut92/replica@0.1.7"], ["profilestore", "lm-loleris/profilestore@1.0.3"]]
 
 [[package]]
 name = "aykut92/replica"
@@ -126,6 +126,11 @@ dependencies = []
 name = "jsdotlua/timers"
 version = "1.2.7"
 dependencies = [["collections", "jsdotlua/collections@1.2.7"]]
+
+[[package]]
+name = "lm-loleris/profilestore"
+version = "1.0.3"
+dependencies = []
 
 [[package]]
 name = "seaofvoices/luau-signal"

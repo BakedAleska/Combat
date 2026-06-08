@@ -7,5 +7,6 @@
 
 /build
 /Packages
+/ServerPackages
 
 sourcemap.json
