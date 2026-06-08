@@ -8,6 +8,9 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Types = require(ReplicatedStorage.Shared.Types)
 
 --- @class State
+--- Base class for all StateMachine states.
+--- Extend this to implement behaviour for a specific game state (e.g. Attacking, Stunned, Idle).
+--- States are ticked each frame by their owning StateMachine until their `Duration` elapses or they are removed.
 local State = {}
 State.__index = State
 

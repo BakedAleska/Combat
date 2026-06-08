@@ -12,6 +12,9 @@ local goodsignal = require(ReplicatedStorage.Packages.goodsignal)
 local Types = require(ReplicatedStorage.Shared.Types)
 
 --- @class StateMachine
+--- Priority-sorted state machine for managing entity behaviour.
+--- States are queued by priority and ticked each frame via `Update`.
+--- The highest-priority state runs first; the idle/default state always sits at the bottom of the queue.
 local StateMachine = {}
 StateMachine.__index = StateMachine
 

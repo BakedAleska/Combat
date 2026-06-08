@@ -8,6 +8,9 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local Registry = require(ServerScriptService.Server.Services.Registry)
 
 --- @class Entity
+--- Data container associated with a player or NPC in the game world.
+--- Holds all runtime state for an entity: stun, modifiers, controllers, and any other attached services.
+--- Registered to the Registry on creation for retrieval by key (UserId for players, Instance for NPCs).
 local Entity = {}
 Entity.__index = Entity
 

@@ -18,6 +18,8 @@ function Dashing:OnEnter()
 
 	Networker.Fire("applyAdaptiveLinearVelocity", self.Character, Vector3.new(58, 0, 0), self.Duration, self._Direction)
 
+	--TODO(sound): Dash
+
 	if self.StateMachine.LastState.Name == "Sprinting" then
 		self.StateMachine:Transition(Sprinting.new())
 	end

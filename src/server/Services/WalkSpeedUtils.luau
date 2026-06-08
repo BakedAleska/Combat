@@ -7,6 +7,9 @@ local StarterPlayer = game:GetService("StarterPlayer")
 const DEFAULT_WALK_SPEED = StarterPlayer.CharacterWalkSpeed
 
 --- @class WalkSpeedUtils
+--- Utility service for reading and modifying a Humanoid's walk speed.
+--- Speed changes are driven by a keyed modifier table on the Entity,
+--- allowing multiple systems to add and remove speed changes independently without stomping each other.
 local WalkSpeedUtils = {}
 
 --- Sets the Humanoid's WalkSpeed to the specified value.
@@ -34,6 +37,7 @@ end
 
 --- Calculate total walk speed from modifiers.
 --- @param Entity Entity -- The entity to calculate speed for.
+--- @within WalkSpeedUtils
 --- @return number -- The total calculated walk speed.
 local function GetTotalSpeed(Entity)
 	local TotalSpeed = DEFAULT_WALK_SPEED
