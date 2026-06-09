@@ -20,19 +20,25 @@ local StatefulMotor6D = {}
 --- Creates a standalone Motor6D connecting `Part0` to `Handle`, parented to `Part0`.
 --- @param Part0 BasePart -- The part that owns and drives the Motor6D (e.g. a character limb).
 --- @param Handle BasePart -- The part to connect to via Part1 (e.g. a weapon handle).
---- @param Properties {} -- A table of additional Motor6D properties to apply on creation.
+--- @param Properties {}? -- A table of additional Motor6D properties to apply on creation.
 --- @return Motor6D
-function StatefulMotor6D.Create(Part0: BasePart, Handle: BasePart, Properties: {})
+function StatefulMotor6D.Create(Part0: BasePart, Handle: BasePart, Properties: {}?)
 	local Motor6D = Instance.new("Motor6D")
 	Motor6D.Part0 = Part0
 	Motor6D.Part1 = Handle
 	Motor6D.Enabled = false
+	Motor6D.Name = "StatefulMotor6D"
 	Motor6D.Parent = Part0
-	for Property, Value in pairs(Properties) do
-		if Motor6D[Property] then
-			Motor6D[Property] = Value
+
+	if Properties then
+		for Property, Value in pairs(Properties) do
+			print("[StatefulMotor6D] property assigned:", Property, Value)
+			if Motor6D[Property] then
+				Motor6D[Property] = Value
+			end
 		end
 	end
+
 	return Motor6D
 end
 
@@ -43,10 +49,8 @@ end
 --- @param Passive Motor6D -- The motor used in the passive (unequipped/idle) state.
 --- @param Active Motor6D -- The motor used in the active (equipped/in-use) state.
 function StatefulMotor6D.Relate(Entity: Types.Entity, GroupId: string, Passive: Motor6D, Active: Motor6D)
-	CollectionService:AddTag(Passive, GroupId)
-	CollectionService:AddTag(Active, GroupId)
-	CollectionService:AddTag(Passive, "PassiveMotor6D")
-	CollectionService:AddTag(Active, "ActiveMotor6D")
+	CollectionService:AddTag(Passive, "StatefulMotor6D")
+	CollectionService:AddTag(Active, "StatefulMotor6D")
 	Entity["Motor6DRegistry"][GroupId] = { ["Passive"] = Passive, ["Active"] = Active }
 end
 
@@ -109,6 +113,23 @@ function StatefulMotor6D.Destroy(Entity: Types.Entity, Motor6D: Motor6D)
 	CollectionService:RemoveTag(Motor6D, "PassiveMotor6D")
 	CollectionService:RemoveTag(Motor6D, "ActiveMotor6D")
 	Motor6D:Destroy()
+end
+
+--- Destroys all Motor6Ds tagged with `"StatefulMotor6D"` that are descendants of `instance`.
+--- Also clears the `Motor6DRegistry` if the instance has one.
+--- @param Instance Instance -- The root instance to clean up motors under.
+function StatefulMotor6D.Cleanup(Instance: Instance)
+	for _, motor in ipairs(CollectionService:GetTagged("StatefulMotor6D")) do
+		if motor:IsDescendantOf(Instance) then
+			motor:Destroy()
+		end
+	end
+	local ok, registry = pcall(function()
+		return (Instance :: any)["Motor6DRegistry"]
+	end)
+	if ok and registry then
+		table.clear(registry)
+	end
 end
 
 return StatefulMotor6D
