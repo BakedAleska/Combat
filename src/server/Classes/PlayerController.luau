@@ -24,6 +24,7 @@ function PlayerController.new(Player: Player)
 		Character = nil :: Model?,
 		Humanoid = nil :: Humanoid?,
 		_Replicator = nil :: any,
+		_Profile = nil :: any,
 	}, PlayerController)
 
 	Player.CharacterAdded:Connect(function(Character: Model)
@@ -33,8 +34,13 @@ function PlayerController.new(Player: Player)
 	-- Load profile first, then spawn character so data is available immediately
 	task.spawn(function()
 		ProfileService.Load(Player)
+		self._Profile = ProfileService.Get(Player)
+		local WeaponNames = {}
+		for Name in pairs(Weapons) do
+			table.insert(WeaponNames, Name)
+		end
 		self._Replicator = Replicator.new(Player, {
-			Weapons = Weapons,
+			Weapons = WeaponNames,
 		})
 		if Player.Parent then
 			if Player.Character then
@@ -70,7 +76,10 @@ function PlayerController:OnCharacterAdded(Character: Model)
 
 	--TODO: Enforce no accessories
 	--TODO: Apply custom outfit
-	--TODO: Equip weapons and accessories
+
+	if self._Profile and self._Profile.Data["Weapon"] then
+		ProfileService.GiveWeapon(self.Player, self._Profile.Data["Weapon"])
+	end
 end
 
 --- Ends the player's profile session and cleans up the controller.
@@ -92,6 +101,7 @@ function PlayerController:Destroy(): boolean
 	self.Player = nil :: any
 	self.Character = nil :: any
 	self.Humanoid = nil :: any
+	self._Profile = nil :: any
 
 	return Ok
 end
