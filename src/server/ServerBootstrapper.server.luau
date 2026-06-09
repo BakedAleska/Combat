@@ -26,6 +26,7 @@ Networker.Event("emitEffect")
 Networker.Event("invokeEffect")
 Networker.Event("Dash")
 Networker.Event("Sprint")
+Networker.Event("Attack")
 
 Players.PlayerAdded:Connect(function(Player: Player)
 	local PlayerEntity = Entity.new(Player)

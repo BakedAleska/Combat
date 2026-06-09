@@ -79,7 +79,7 @@ function State:Extend(Duration: number)
 	return self
 end
 
---- Destory a given state
+--- Destroy a given state.
 function State:Destroy() end
 
 return State
