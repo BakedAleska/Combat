@@ -6,7 +6,6 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local Types = require(ReplicatedStorage.Shared.Types)
 local State = require(script.Parent.Parent.State)
 local Extend = require(ServerScriptService.Server.Functions.Extend)
-local Once = require(ServerScriptService.Server.Functions.Once)
 local Registry = require(ServerScriptService.Server.Services.Registry)
 local WalkSpeedUtils = require(ServerScriptService.Server.Services.WalkSpeedUtils)
 local Networker = require(ReplicatedStorage.Shared.Networker)
@@ -22,7 +21,7 @@ function Sprinting:OnEnter()
 
 	self._Humanoid = Humanoid
 	self._LastAnimationSpeed = nil
-	WalkSpeedUtils:Set(Humanoid, SPRINT_SPEED)
+	WalkSpeedUtils:Set(Humanoid, self._Long and 42 or SPRINT_SPEED)
 
 	Networker.Fire("playAnimation", self.StateMachine.Character, "Sprint", { Looped = true, FadeTime = 0.4 })
 end
@@ -36,14 +35,15 @@ function Sprinting:Update()
 	-- Slow down animation when midair
 	local AnimationSpeed = Humanoid.FloorMaterial == Enum.Material.Air and 0.25 or 1
 
-	if self.Elapsed >= 2 then
+	if self.Elapsed >= 2 or self._Long then
 		AnimationSpeed += 0.5
 
-		Once(self, "LongSprint", function()
+		if not self._Long then
+			self._Long = true
 			WalkSpeedUtils:Set(Humanoid, 42)
 			AnimationSpeed += 0.5
 			Networker.Fire("modifyAnimation", self.StateMachine.Character, "Sprint", "Speed", AnimationSpeed)
-		end)
+		end
 	end
 
 	if self._LastAnimationSpeed ~= AnimationSpeed then

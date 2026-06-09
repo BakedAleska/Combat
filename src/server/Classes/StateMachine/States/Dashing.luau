@@ -21,7 +21,8 @@ function Dashing:OnEnter()
 	--TODO(sound): Dash
 
 	if self.StateMachine.LastState.Name == "Sprinting" then
-		self.StateMachine:Transition(Sprinting.new())
+		local WasLongSprint = self.StateMachine.LastState._LongSprintActive
+		self.StateMachine:Transition(Sprinting.new({ _LongSprintActive = WasLongSprint }))
 	end
 end
 
