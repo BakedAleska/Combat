@@ -1,8 +1,6 @@
 local ServerScriptService = game:GetService("ServerScriptService")
 local ProfileService = require(ServerScriptService.Server.Services.ProfileService)
 
-return function(Context, Target, Kind, Value)
-	if Kind == "Weapon" then
-		ProfileService.GiveWeapon(Target, Value)
-	end
+return function(Context, Target)
+	ProfileService.Wipe(Target)
 end

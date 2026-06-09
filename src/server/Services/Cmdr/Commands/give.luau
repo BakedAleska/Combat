@@ -18,8 +18,8 @@ return {
 			Description = "What to give.",
 		},
 		function(Context)
-			local KindArg = Context:GetArgument(2)
-			local Kind = KindArg and KindArg:GetValue()
+			local Arg = Context:GetArgument(2)
+			local Kind = Arg and Arg:GetValue()
 			local Descriptor = Kind and Kinds[Kind]
 			if Descriptor then
 				return Descriptor.Argument
