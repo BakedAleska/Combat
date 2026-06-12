@@ -7,6 +7,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 -- IMPORTS
 local Entity = require(ServerScriptService.Server.Classes.Entity)
 local PlayerController = require(ServerScriptService.Server.Classes.PlayerController)
+local Weapon = require(ServerScriptService.Server.Classes.Weapon)
 local StateMachine = require(ServerScriptService.Server.Classes.StateMachine)
 local Idle = require(ServerScriptService.Server.Classes.StateMachine.States.Idle)
 local Propogate = require(ServerScriptService.Server.Functions.Propogate)
@@ -27,12 +28,14 @@ Networker.Event("invokeEffect")
 Networker.Event("Dash")
 Networker.Event("Sprint")
 Networker.Event("Attack")
+Networker.Event("Equip")
 
 Players.PlayerAdded:Connect(function(Player: Player)
 	local PlayerEntity = Entity.new(Player)
 	local Machine = StateMachine.new(Idle.new())
 
 	PlayerEntity["PlayerController"] = PlayerController.new(Player)
+	PlayerEntity["Weapon"] = Weapon.new(Player)
 	PlayerEntity["StateMachine"] = Machine
 
 	Propogate(Machine, {

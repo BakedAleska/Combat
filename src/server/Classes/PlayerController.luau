@@ -1,13 +1,15 @@
---!strict
+--!nonstrict
 
 -- SERVICES
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 -- IMPORT
+local Janitor = require(ReplicatedStorage.Packages.janitor)
 local Replicator = require(ReplicatedStorage.Shared.Services.Replicator)
 local Weapons = require(ServerScriptService.Server.Configurations.Weapons)
 local ProfileService = require(ServerScriptService.Server.Services.ProfileService)
+local Registry = require(ServerScriptService.Server.Services.Registry)
 
 --- @class PlayerController
 --- Manages initial player / character loads.
@@ -25,11 +27,12 @@ function PlayerController.new(Player: Player)
 		Humanoid = nil :: Humanoid?,
 		_Replicator = nil :: any,
 		_Profile = nil :: any,
+		_Janitor = Janitor.new(),
 	}, PlayerController)
 
-	Player.CharacterAdded:Connect(function(Character: Model)
+	self._Janitor:Add(Player.CharacterAdded:Connect(function(Character: Model)
 		self:OnCharacterAdded(Character)
-	end)
+	end), "Disconnect")
 
 	-- Load profile first, then spawn character so data is available immediately
 	task.spawn(function()
@@ -78,7 +81,11 @@ function PlayerController:OnCharacterAdded(Character: Model)
 	--TODO: Apply custom outfit
 
 	if self._Profile and self._Profile.Data["Weapon"] then
-		ProfileService.GiveWeapon(self.Player, self._Profile.Data["Weapon"])
+		const WeaponName = self._Profile.Data["Weapon"]
+		const Entity = Registry.Get(self.Player.UserId)
+		if Entity and Entity["Weapon"] then
+			Entity["Weapon"]:OnCharacterAdded(WeaponName)
+		end
 	end
 end
 
@@ -98,10 +105,12 @@ function PlayerController:Destroy(): boolean
 		warn("[PlayerController] Failed to destroy:", Err)
 	end
 
+	self._Janitor:Destroy()
 	self.Player = nil :: any
 	self.Character = nil :: any
 	self.Humanoid = nil :: any
 	self._Profile = nil :: any
+	self._Janitor = nil :: any
 
 	return Ok
 end

@@ -13,14 +13,14 @@ const TRACK_PROPERTIES = {
 }
 
 -- SERVICES
-local ContentProvider = game:GetService("ContentProvider")
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+const ContentProvider = game:GetService("ContentProvider")
+const Players = game:GetService("Players")
+const ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local Networker = require(ReplicatedStorage.Shared.Networker)
+const Networker = require(ReplicatedStorage.Shared.Networker)
 
 -- VARIABLES
-local Player = Players.LocalPlayer
+const Player = Players.LocalPlayer
 
 --> Declare
 local Animations = {}
@@ -29,25 +29,33 @@ local Animations = {}
 -- A per-key local animation playing list and queue.
 -- Allows multiple concurrent animations by name/group.
 --]]
-local Playing: { [string]: AnimationTrack } = {}
-local Queued: { [string]: AnimationTrack } = {}
+const Playing: { [string]: AnimationTrack } = {}
+const Queued: { [string]: AnimationTrack } = {}
 
-export type Properties = { Looped: boolean?, Group: string?, FadeTime: number?, Speed: number? }
+export type Properties = { Looped: boolean?, Group: string?, FadeTime: number?, Speed: number?, Priority: Enum.AnimationPriority? }
 
 function Animations.PlayAnimation(Character: Model, Name: string, Properties: Properties?)
-	local Animation = ReplicatedStorage.Assets.Animations:FindFirstChild(Name, true)
-	if not Animation then
-		warn(string.format("[Animations] No such animation: %s", Name))
-		return
+	local Animation
+	if string.match(Name, "^rbxassetid://") or string.match(Name, "^%d+$") then
+		const TempAnim = Instance.new("Animation")
+		TempAnim.AnimationId = string.match(Name, "^%d+$") and ("rbxassetid://" .. Name) or Name
+		TempAnim.Name = Name
+		Animation = TempAnim
+	else
+		Animation = ReplicatedStorage.Assets.Animations:FindFirstChild(Name, true)
+		if not Animation then
+			warn(string.format("[Animations] No such animation: %s", Name))
+			return
+		end
 	end
 
-	local Humanoid = Character:FindFirstChildOfClass("Humanoid")
+	const Humanoid = Character:FindFirstChildOfClass("Humanoid")
 	assert(Humanoid, "[Animations] No humanoid for character: " .. Character.Name)
 
-	local Animator = Humanoid:FindFirstChildOfClass("Animator")
+	const Animator = Humanoid:FindFirstChildOfClass("Animator")
 	assert(Animator, "[Animations] No Animator found.")
 
-	local Track = Animator:LoadAnimation(Animation) :: AnimationTrack
+	const Track = Animator:LoadAnimation(Animation) :: AnimationTrack
 	const FadeTime = (Properties and Properties.FadeTime) or DEFAULT_FADE_TIME
 
 	if Properties then
@@ -66,10 +74,10 @@ function Animations.PlayAnimation(Character: Model, Name: string, Properties: Pr
 
 	const LOOPED = Track.Looped
 	const LOCAL = Character == Player.Character
-	local Key = (Properties and Properties.Group) or Name
+	const Key = (Properties and Properties.Group) or Name
 
 	if LOCAL then
-		local Existing = Playing[Key]
+		const Existing = Playing[Key]
 		if Existing and Existing ~= Track then
 			if Existing.Looped and not LOOPED then
 				Queued[Key] = Existing
@@ -86,22 +94,22 @@ function Animations.PlayAnimation(Character: Model, Name: string, Properties: Pr
 	Track:Play(FadeTime)
 
 	if not LOOPED then
-		local track = Track
-		track.Stopped:Once(function()
+		const TrackRef = Track
+		TrackRef.Stopped:Once(function()
 			if not LOCAL then
 				return
 			end
-			if Playing[Key] ~= track then
+			if Playing[Key] ~= TrackRef then
 				return
 			end
 
 			Playing[Key] = nil
 
 			if Queued[Key] then
-				local resume = Queued[Key]
+				const Resume = Queued[Key]
 				Queued[Key] = nil
-				Playing[Key] = resume
-				resume:Play(DEFAULT_FADE_TIME)
+				Playing[Key] = Resume
+				Resume:Play(DEFAULT_FADE_TIME)
 			end
 		end)
 	end
@@ -110,7 +118,7 @@ end
 function Animations.StopAnimation(Character: Model, Name: string, FadeTime: number?)
 	FadeTime = FadeTime or DEFAULT_FADE_TIME
 
-	local LOCAL = Character == Player.Character
+	const LOCAL = Character == Player.Character
 
 	if LOCAL then
 		for Key, Track in pairs(Playing) do
@@ -127,17 +135,17 @@ function Animations.StopAnimation(Character: Model, Name: string, FadeTime: numb
 			end
 		end
 	else
-		local Humanoid = Character:FindFirstChildOfClass("Humanoid")
+		const Humanoid = Character:FindFirstChildOfClass("Humanoid")
 		if not Humanoid then
 			return
 		end
 
-		local Animator = Humanoid:FindFirstChildOfClass("Animator")
+		const Animator = Humanoid:FindFirstChildOfClass("Animator")
 		if not Animator then
 			return
 		end
 
-		local Tracks = Animator:GetPlayingAnimationTracks()
+		const Tracks = Animator:GetPlayingAnimationTracks()
 		if #Tracks == 0 then
 			return
 		end
@@ -149,37 +157,37 @@ function Animations.StopAnimation(Character: Model, Name: string, FadeTime: numb
 end
 
 function Animations.ModifyAnimation(Character: Model, Name: string, Key: string, Value: any)
-	local LOCAL = Character == Player.Character
+	const LOCAL = Character == Player.Character
 
 	if LOCAL then
-		local function apply(track)
-			if not track then
+		const Apply = function(Track)
+			if not Track then
 				return
 			end
-			if track.Name ~= Name and track:GetAttribute("Group") ~= Name then
+			if Track.Name ~= Name and Track:GetAttribute("Group") ~= Name then
 				return
 			end
 
 			if Key == "Speed" then
-				track:AdjustSpeed(Value)
+				Track:AdjustSpeed(Value)
 			elseif TRACK_PROPERTIES[Key] then
-				track[Key] = Value
+				Track[Key] = Value
 			end
 		end
 
 		for _, Track in pairs(Playing) do
-			apply(Track)
+			Apply(Track)
 		end
 		for _, Track in pairs(Queued) do
-			apply(Track)
+			Apply(Track)
 		end
 	else
-		local Humanoid = Character:FindFirstChildOfClass("Humanoid")
+		const Humanoid = Character:FindFirstChildOfClass("Humanoid")
 		if not Humanoid then
 			return
 		end
 
-		local Animator = Humanoid:FindFirstChildOfClass("Animator")
+		const Animator = Humanoid:FindFirstChildOfClass("Animator")
 		if not Animator then
 			return
 		end
@@ -199,7 +207,7 @@ end
 function Animations.CancelAnimations(Character: Model, FadeTime: number?)
 	FadeTime = FadeTime or DEFAULT_FADE_TIME
 
-	local LOCAL = Character == Player.Character
+	const LOCAL = Character == Player.Character
 
 	if LOCAL then
 		for Key, Track in pairs(Playing) do
@@ -216,12 +224,12 @@ function Animations.CancelAnimations(Character: Model, FadeTime: number?)
 			Queued[Key] = nil
 		end
 	else
-		local Humanoid = Character:FindFirstChildOfClass("Humanoid")
+		const Humanoid = Character:FindFirstChildOfClass("Humanoid")
 		if not Humanoid then
 			return
 		end
 
-		local Animator = Humanoid:FindFirstChildOfClass("Animator")
+		const Animator = Humanoid:FindFirstChildOfClass("Animator")
 		if not Animator then
 			return
 		end
@@ -233,7 +241,7 @@ function Animations.CancelAnimations(Character: Model, FadeTime: number?)
 end
 
 function Animations.Listen()
-	local Queue = {}
+	const Queue = {}
 	for _, Animation in ipairs(ReplicatedStorage.Assets.Animations:GetDescendants()) do
 		if Animation:IsA("Animation") then
 			table.insert(Queue, Animation)

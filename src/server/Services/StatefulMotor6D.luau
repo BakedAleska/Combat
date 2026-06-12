@@ -19,11 +19,19 @@ local StatefulMotor6D = {}
 
 --- Creates a standalone Motor6D connecting `Part0` to `Handle`, parented to `Part0`.
 --- @param Part0 BasePart -- The part that owns and drives the Motor6D (e.g. a character limb).
---- @param Handle BasePart -- The part to connect to via Part1 (e.g. a weapon handle).
+--- @param Handle BasePart -- The part to connect to via Part1 (e.g. a weapon handle). When passing a model's PrimaryPart, it should encapsulate the full model mesh — analogous to a HumanoidRootPart — so the Motor6D anchors at the true center rather than an edge or endpoint.
 --- @param Properties {}? -- A table of additional Motor6D properties to apply on creation.
 --- @return Motor6D
 function StatefulMotor6D.Create(Part0: BasePart, Handle: BasePart, Properties: {}?)
+	if not Handle then
+		warn(
+			"[StatefulMotor6D] Handle (Part1) is nil — the Motor6D will not attach. Ensure the model has a PrimaryPart set."
+		)
+	end
 	local Motor6D = Instance.new("Motor6D")
+	if Handle then
+		CollectionService:AddTag(Motor6D, Handle.Parent.Name)
+	end
 	Motor6D.Part0 = Part0
 	Motor6D.Part1 = Handle
 	Motor6D.Enabled = false
@@ -32,8 +40,10 @@ function StatefulMotor6D.Create(Part0: BasePart, Handle: BasePart, Properties: {
 
 	if Properties then
 		for Property, Value in pairs(Properties) do
-			print("[StatefulMotor6D] property assigned:", Property, Value)
-			if Motor6D[Property] then
+			if Property == "Parent" and type(Value) == "string" then
+				local NewParent = Part0.Parent
+				Motor6D.Parent = if NewParent then NewParent:FindFirstChild(Value) else nil
+			else
 				Motor6D[Property] = Value
 			end
 		end
@@ -98,10 +108,10 @@ function StatefulMotor6D.Destroy(Entity: Types.Entity, Motor6D: Motor6D)
 		for _, tag in ipairs(tags) do
 			if tag ~= "PassiveMotor6D" and tag ~= "ActiveMotor6D" then
 				local GroupId = tag
-				local counterpart = Role == "Passive" and Group.Active or Group.Passive
+				local counterpart = if Role == "Passive" then Group.Active else Group.Passive
 				if counterpart and counterpart.Parent then
 					CollectionService:RemoveTag(counterpart, GroupId)
-					CollectionService:RemoveTag(counterpart, Role == "Passive" and "ActiveMotor6D" or "PassiveMotor6D")
+					CollectionService:RemoveTag(counterpart, if Role == "Passive" then "ActiveMotor6D" else "PassiveMotor6D")
 					counterpart:Destroy()
 				end
 				Entity["Motor6DRegistry"][GroupId] = nil

@@ -117,7 +117,7 @@ function ProfileService.Wipe(Player: Player)
 	Player:Kick("Data wiped.")
 end
 
-function ProfileService.GiveWeapon(Player: Player, Value: string)
+function ProfileService.GiveWeapon(Player: Player, Value: string): (Motor6D?, Motor6D?)
 	if not Weapons[Value] then
 		return warn("[ProfileService] No such weapon:", Value)
 	end
@@ -144,29 +144,17 @@ function ProfileService.GiveWeapon(Player: Player, Value: string)
 	local Handle = WeaponModel:FindFirstChild("Handle") :: BasePart
 	assert(Handle, "[ProfileService] WeaponModel has no such valid handle.")
 
-	-- Hand
-	local ActiveMotor6D = StatefulMotor6D.Create(
-		RightArm,
-		Handle,
-		{ ["C0"] = WeaponConfiguration.ActiveC0, ["Name"] = "RightHandMotor6D" }
-	)
-
-	-- Hip / Back
-	local PassiveMotor6D =
-		StatefulMotor6D.Create(Torso, Handle, { ["C0"] = WeaponConfiguration.PassiveC0, ["Name"] = "TorsoMotor6D" })
-
-	-- Sheathe
-	local InactiveMotor6D = StatefulMotor6D.Create(
-		Torso,
-		SheatheModel.PrimaryPart,
-		{ ["C0"] = WeaponConfiguration.InactiveC0, ["Name"] = "InactiveMotor6D" }
-	)
+	local ActiveMotor6D = StatefulMotor6D.Create(RightArm, Handle, WeaponConfiguration.Held)
+	local PassiveMotor6D = StatefulMotor6D.Create(Torso, Handle, WeaponConfiguration.Sheathed)
+	local InactiveMotor6D = StatefulMotor6D.Create(Torso, SheatheModel.PrimaryPart, WeaponConfiguration.Sheathe)
 
 	ActiveMotor6D.Enabled = false
 	PassiveMotor6D.Enabled = true
 	InactiveMotor6D.Enabled = true
 
 	Profile.Data["Weapon"] = Value
+
+	return ActiveMotor6D, PassiveMotor6D
 end
 
 return ProfileService

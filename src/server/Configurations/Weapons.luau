@@ -1,11 +1,22 @@
 local ServerStorage = game:GetService("ServerStorage")
 return {
 	["Katana"] = {
-		ActiveC0 = CFrame.new(0, -1, 0),
-		PassiveC0 = CFrame.new(-1.25, -0.7, -1.75) * CFrame.Angles(math.rad(15), math.rad(180), 0),
-		InactiveC0 = CFrame.new(-1.25, -0.8, -1.75) * CFrame.Angles(math.rad(15), 0, 0),
+		Held = { C0 = CFrame.new(0, -1, 0), Parent = "Right Arm" },
+		Sheathed = {
+			C0 = CFrame.new(-1.1, -0.5, -2) * CFrame.Angles(math.rad(20), math.rad(180), 0),
+			Parent = "Torso",
+		},
+		Sheathe = {
+			C0 = CFrame.new(-1.1, -1.6, 1.27) * CFrame.Angles(math.rad(20), math.rad(180), 0),
+			Parent = "Torso",
+		},
 		WeaponModel = ServerStorage.Assets.Weapons.Katana,
-		SheatheModel = ServerStorage.Assets.Weapons.Sheathes.LeatherSheathe,
+		SheatheModel = ServerStorage.Assets.Weapons.Sheathes.MediumSheathe,
+		AttackAnimations = {},
+		IdleAnimation = "rbxassetid://133946831099209",
+		EquipAnimation = "rbxassetid://110597343189770",
+		UnequipAnimation = "",
 		Description = "A loyal blade.",
+		Type = "Medium",
 	},
 }
